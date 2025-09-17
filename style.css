@@ -1,0 +1,92 @@
+body {
+    margin: 0;
+    padding: 20px 0;
+    font-family: Arial, sans-serif;
+    overflow: hidden;
+}
+
+.container {
+    text-align: center;
+    background: white;
+    border-radius: 15px;
+    width: 90%;
+    max-width: 500px;
+    margin: 10px auto;
+}
+
+h1 {
+    margin-bottom: 25px;
+}
+
+canvas {
+    border: 2px solid #ccc;
+    cursor: crosshair;
+    image-rendering: pixelated;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1 / 1;
+    max-width: 320px;
+    border-radius: 8px;
+}
+
+.controls {
+    margin: 25px 0;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+button {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+}
+
+.clear-btn {
+    background-color: #6c757d;
+    color: white;
+}
+
+.clear-btn:hover {
+    background-color: #545b62;
+}
+
+.predict-btn {
+    background-color: #007bff;
+    color: white;
+}
+
+.predict-btn:hover {
+    background-color: #0056b3;
+}
+
+.predict-btn:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+.prediction-label {
+    margin: 25px 0;
+    padding: 20px;
+    background-color: #e7f3ff;
+    border: 2px solid #007bff;
+    border-radius: 10px;
+    display: none;
+}
+
+.prediction-result {
+    font-size: 28px;
+    font-weight: bold;
+    color: #007bff;
+    margin-bottom: 10px;
+}
+
+.confidence {
+    font-size: 18px;
+    color: #666;
+}

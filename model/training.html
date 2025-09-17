@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shape Model Training</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tensorflow/4.2.0/tf.min.js"></script>
+    <style>
+      body {
+            margin: 0;
+            padding: 30px;
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        
+        .upload-section {
+            margin: 30px 0;
+            padding: 25px;
+            border: 2px dashed #ddd;
+            border-radius: 10px;
+            text-align: center;
+            background-color: #fafafa;
+        }
+        
+        .upload-section:hover {
+            border-color: #007bff;
+            background-color: #f0f8ff;
+        }
+        
+        .file-input {
+            margin: 15px 0;
+        }
+        
+        .file-input input[type="file"] {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: white;
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        .shape-selector {
+            margin: 15px 0;
+        }
+        
+        .shape-selector select {
+            padding: 10px 15px;
+            font-size: 16px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            background: white;
+            min-width: 150px;
+        }
+        
+        .upload-btn {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            margin: 10px;
+        }
+        
+        .upload-btn:hover {
+            background-color: #218838;
+        }
+        
+        .upload-btn:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        .train-btn {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            margin: 20px 0;
+            display: block;
+            width: 100%;
+        }
+        
+        .train-btn:hover {
+            background-color: #0056b3;
+        }
+        
+        .train-btn:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #e7f3ff;
+            border-left: 4px solid #007bff;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 25px;
+            background-color: #e9ecef;
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 15px 0;
+            display: none;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background-color: #007bff;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .data-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 25px 0;
+        }
+        
+        .data-card {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .data-card h3 {
+            margin: 0 0 10px 0;
+            color: #495057;
+            text-transform: capitalize;
+        }
+        
+        .data-count {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        
+        .image-preview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 15px 0;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .preview-img {
+            width: 50px;
+            height: 50px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            object-fit: cover;
+        }
+        
+        .download-section {
+            margin: 30px 0;
+            padding: 20px;
+            background-color: #d4edda;
+            border-radius: 8px;
+            text-align: center;
+            display: none;
+        }
+        
+        .download-btn {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .download-btn:hover {
+            background-color: #218838;
+        }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Shape Model Training</h1>
+      <p style="text-align: center; color: #666;">Upload PNG images to train your shape classification model</p>
+      <div class="upload-section">
+        <h3>Upload Training Images</h3>
+        <div class="shape-selector">
+          <label for="shapeSelect">Shape Type:</label>
+          <select id="shapeSelect">
+            <option value="0">Circle</option>
+            <option value="1">Square</option>
+            <option value="2">Rectangle</option>
+            <option value="3">Triangle</option>
+          </select>
+        </div>
+        <div class="file-input">
+          <input type="file" id="fileInput" accept=".png" multiple>
+        </div>
+        <button class="upload-btn" onclick="uploadImages()">Add Images to Training Data</button>
+        <div class="image-preview" id="imagePreview"></div>
+      </div>
+      <div class="data-summary" id="dataSummary">
+        <div class="data-card">
+          <h3>Circle</h3>
+          <div class="data-count" id="circleCount">0</div>
+        </div>
+        <div class="data-card">
+          <h3>Square</h3>
+          <div class="data-count" id="squareCount">0</div>
+        </div>
+        <div class="data-card">
+          <h3>Rectangle</h3>
+          <div class="data-count" id="rectangleCount">0</div>
+        </div>
+        <div class="data-card">
+          <h3>Triangle</h3>
+          <div class="data-count" id="triangleCount">0</div>
+        </div>
+      </div>
+      <div class="status" id="status">Upload images for each shape type to begin training</div>
+      <div class="progress-bar" id="progressBar">
+        <div class="progress-fill" id="progressFill">0%</div>
+      </div>
+      <button class="train-btn" id="trainBtn" onclick="trainModel()" disabled>
+        Train Model
+      </button>
+      <div class="download-section" id="downloadSection">
+        <h3>Training Complete!</h3>
+        <p>Your model has been trained successfully. Download the model files:</p>
+        <a href="#" class="download-btn" id="downloadModel" download="model.json">Download model.json</a>
+        <a href="#" class="download-btn" id="downloadWeights" download="weights.bin">Download weights.bin</a>
+      </div>
+    </div>
+    <script>
+      let trainingData = [];
+        let trainingLabels = [];
+        let model = null;
+        let shapeCounts = [0, 0, 0, 0];
+        const shapeNames = ['circle', 'square', 'rectangle', 'triangle'];
+        
+        function updateDataSummary() {
+            for (let i = 0; i < 4; i++) {
+                document.getElementById(`${shapeNames[i]}Count`).textContent = shapeCounts[i];
+            }
+            
+            const totalSamples = shapeCounts.reduce((a, b) => a + b, 0);
+            const minSamples = Math.min(...shapeCounts);
+            
+            if (totalSamples >= 20 && minSamples >= 3) {
+                document.getElementById('trainBtn').disabled = false;
+            }
+        }
+        
+        async function processImage(file, label) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                canvas.width = 32;
+                canvas.height = 32;
+                
+                img.onload = () => {
+                    // Draw image to canvas (resized to 32x32)
+                    ctx.fillStyle = 'white';
+                    ctx.fillRect(0, 0, 32, 32);
+                    ctx.drawImage(img, 0, 0, 32, 32);
+                    
+                    // Get image data and convert to grayscale
+                    const imageData = ctx.getImageData(0, 0, 32, 32);
+                    const pixels = imageData.data;
+                    
+                    const grayscalePixels = [];
+                    for (let i = 0; i < pixels.length; i += 4) {
+                        // Convert RGBA to grayscale and normalize
+                        const gray = (255 - pixels[i]) / 255.0; // Invert: white=0, black=1
+                        grayscalePixels.push(gray);
+                    }
+                    
+                    trainingData.push(grayscalePixels);
+                    trainingLabels.push(label);
+                    shapeCounts[label]++;
+                    
+                    resolve();
+                };
+                
+                img.src = URL.createObjectURL(file);
+            });
+        }
+        
+        async function uploadImages() {
+            const fileInput = document.getElementById('fileInput');
+            const files = fileInput.files;
+            const selectedShape = parseInt(document.getElementById('shapeSelect').value);
+            
+            if (files.length === 0) {
+                alert('Please select PNG files to upload');
+                return;
+            }
+            
+            const uploadBtn = document.querySelector('.upload-btn');
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = 'Processing...';
+            
+            const imagePreview = document.getElementById('imagePreview');
+            imagePreview.innerHTML = '';
+            
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                
+                if (file.type !== 'image/png') {
+                    continue;
+                }
+                
+                // Add preview
+                const img = document.createElement('img');
+                img.src = URL.createObjectURL(file);
+                img.className = 'preview-img';
+                imagePreview.appendChild(img);
+                
+                await processImage(file, selectedShape);
+            }
+            
+            updateDataSummary();
+            
+            uploadBtn.disabled = false;
+            uploadBtn.textContent = 'Add Images to Training Data';
+            
+            document.getElementById('status').textContent = 
+                `Added ${files.length} ${shapeNames[selectedShape]} images. Total: ${trainingData.length} samples`;
+            
+            // Clear file input
+            fileInput.value = '';
+        }
+        
+        function createModel() {
+            const model = tf.sequential({
+                layers: [
+                    tf.layers.conv2d({
+                        inputShape: [32, 32, 1],
+                        filters: 32,
+                        kernelSize: 3,
+                        activation: 'relu'
+                    }),
+                    tf.layers.maxPooling2d({ poolSize: 2 }),
+                    tf.layers.conv2d({
+                        filters: 64,
+                        kernelSize: 3,
+                        activation: 'relu'
+                    }),
+                    tf.layers.maxPooling2d({ poolSize: 2 }),
+                    tf.layers.conv2d({
+                        filters: 64,
+                        kernelSize: 3,
+                        activation: 'relu'
+                    }),
+                    tf.layers.flatten(),
+                    tf.layers.dense({
+                        units: 64,
+                        activation: 'relu'
+                    }),
+                    tf.layers.dropout({ rate: 0.5 }),
+                    tf.layers.dense({
+                        units: 4,
+                        activation: 'softmax'
+                    })
+                ]
+            });
+            
+            model.compile({
+                optimizer: 'adam',
+                loss: 'sparseCategoricalCrossentropy',
+                metrics: ['accuracy']
+            });
+            
+            return model;
+        }
+        
+        async function trainModel() {
+            if (trainingData.length < 20) {
+                alert('Need at least 20 total samples to train!');
+                return;
+            }
+            
+            const trainBtn = document.getElementById('trainBtn');
+            const progressBar = document.getElementById('progressBar');
+            const progressFill = document.getElementById('progressFill');
+            
+            trainBtn.disabled = true;
+            trainBtn.textContent = 'Training...';
+            progressBar.style.display = 'block';
+            
+            // Prepare data
+            const reshapedData = trainingData.map(data => {
+                const reshaped = [];
+                for (let i = 0; i < 32; i++) {
+                    reshaped[i] = [];
+                    for (let j = 0; j < 32; j++) {
+                        reshaped[i][j] = [data[i * 32 + j]];
+                    }
+                }
+                return reshaped;
+            });
+            
+            const xs = tf.tensor4d(reshapedData);
+            const ys = tf.tensor1d(trainingLabels);
+            
+            // Create and train model
+            model = createModel();
+            
+            try {
+                await model.fit(xs, ys, {
+                    epochs: 50,
+                    batchSize: 16,
+                    validationSplit: 0.2,
+                    shuffle: true,
+                    callbacks: {
+                        onEpochEnd: (epoch, logs) => {
+                            const progress = ((epoch + 1) / 50) * 100;
+                            progressFill.style.width = `${progress}%`;
+                            progressFill.textContent = `${Math.round(progress)}%`;
+                            
+                            document.getElementById('status').textContent = 
+                                `Training... Epoch ${epoch + 1}/50 - Accuracy: ${(logs.acc * 100).toFixed(1)}%`;
+                        }
+                    }
+                });
+                
+                document.getElementById('status').textContent = 
+                    'Training complete! Model ready for download.';
+                
+                // Enable download
+                await enableModelDownload();
+                
+            } catch (error) {
+                console.error('Training error:', error);
+                document.getElementById('status').textContent = 'Training failed!';
+            }
+            
+            trainBtn.disabled = false;
+            trainBtn.textContent = 'Train Model';
+            
+            xs.dispose();
+            ys.dispose();
+        }
+        
+        async function enableModelDownload() {
+            const downloadSection = document.getElementById('downloadSection');
+            downloadSection.style.display = 'block';
+            
+            // Save model and create download links
+            const saveResults = await model.save('downloads://shape-model');
+            
+            // Create blob URLs for download
+            const modelJson = JSON.stringify(await model.toJSON());
+            const modelBlob = new Blob([modelJson], { type: 'application/json' });
+            const modelUrl = URL.createObjectURL(modelBlob);
+            
+            const weights = await model.getWeights();
+            const weightsData = weights.map(w => w.dataSync()).flat();
+            const weightsArray = new Float32Array(weightsData);
+            const weightsBlob = new Blob([weightsArray], { type: 'application/octet-stream' });
+            const weightsUrl = URL.createObjectURL(weightsBlob);
+            
+            document.getElementById('downloadModel').href = modelUrl;
+            document.getElementById('downloadWeights').href = weightsUrl;
+        }
+    </script>
+  </body>
+</html>

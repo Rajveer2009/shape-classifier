@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>32x32 Drawing Canvas</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+        
+        .container {
+            text-align: center;
+        }
+        
+        canvas {
+            border: 2px solid #333;
+            cursor: crosshair;
+            image-rendering: pixelated;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: crisp-edges;
+            width: 320px;
+            height: 320px;
+        }
+        
+        .controls {
+            margin-top: 15px;
+        }
+        
+        .shape-selector {
+            margin-bottom: 15px;
+        }
+        
+        .shape-selector label {
+            margin-right: 15px;
+            font-size: 16px;
+            color: #333;
+        }
+        
+        select {
+            padding: 8px 12px;
+            margin-left: 10px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            background-color: white;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        
+        select:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+        
+        button {
+            padding: 8px 16px;
+            margin: 0 5px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        button:hover {
+            background-color: #0056b3;
+        }
+        
+        .download-btn {
+            background-color: #28a745;
+        }
+        
+        .download-btn:hover {
+            background-color: #218838;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>32x32 Drawing Canvas</h1>
+        <div class="shape-selector">
+            <label for="shapeSelect">Shape:</label>
+            <select id="shapeSelect">
+                <option value="circle">Circle</option>
+                <option value="square">Square</option>
+                <option value="rectangle">Rectangle</option>
+                <option value="triangle">Triangle</option>
+            </select>
+        </div>
+        <canvas id="drawingCanvas" width="32" height="32"></canvas>
+        <div class="controls">
+            <button onclick="clearCanvas()">Clear</button>
+            <button class="download-btn" onclick="downloadImage()">Download PNG</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('drawingCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Set initial white background
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, 32, 32);
+        
+        let isDrawing = false;
+        let lastPos = null;
+        
+        function getPixelPosition(e) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            
+            const x = Math.floor((e.clientX - rect.left) * scaleX);
+            const y = Math.floor((e.clientY - rect.top) * scaleY);
+            
+            return { x, y };
+        }
+        
+        function drawPixel(x, y) {
+            if (x >= 0 && x < 32 && y >= 0 && y < 32) {
+                ctx.fillStyle = 'black';
+                ctx.fillRect(x, y, 1, 1);
+            }
+        }
+        
+        function drawLine(x0, y0, x1, y1) {
+            // Bresenham's line algorithm to fill gaps
+            const dx = Math.abs(x1 - x0);
+            const dy = Math.abs(y1 - y0);
+            const sx = x0 < x1 ? 1 : -1;
+            const sy = y0 < y1 ? 1 : -1;
+            let err = dx - dy;
+            
+            let x = x0;
+            let y = y0;
+            
+            while (true) {
+                drawPixel(x, y);
+                
+                if (x === x1 && y === y1) break;
+                
+                const e2 = 2 * err;
+                if (e2 > -dy) {
+                    err -= dy;
+                    x += sx;
+                }
+                if (e2 < dx) {
+                    err += dx;
+                    y += sy;
+                }
+            }
+        }
+        
+        // Mouse events
+        canvas.addEventListener('mousedown', (e) => {
+            isDrawing = true;
+            const pos = getPixelPosition(e);
+            lastPos = pos;
+            drawPixel(pos.x, pos.y);
+        });
+        
+        canvas.addEventListener('mousemove', (e) => {
+            if (isDrawing) {
+                const pos = getPixelPosition(e);
+                if (lastPos) {
+                    drawLine(lastPos.x, lastPos.y, pos.x, pos.y);
+                } else {
+                    drawPixel(pos.x, pos.y);
+                }
+                lastPos = pos;
+            }
+        });
+        
+        canvas.addEventListener('mouseup', () => {
+            isDrawing = false;
+            lastPos = null;
+        });
+        
+        canvas.addEventListener('mouseleave', () => {
+            isDrawing = false;
+            lastPos = null;
+        });
+        
+        // Touch events for mobile
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            isDrawing = true;
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent('mousedown', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            canvas.dispatchEvent(mouseEvent);
+        });
+        
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (isDrawing) {
+                const touch = e.touches[0];
+                const mouseEvent = new MouseEvent('mousemove', {
+                    clientX: touch.clientX,
+                    clientY: touch.clientY
+                });
+                canvas.dispatchEvent(mouseEvent);
+            }
+        });
+        
+        canvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            isDrawing = false;
+        });
+        
+        function clearCanvas() {
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, 32, 32);
+        }
+        
+        function downloadImage() {
+            const shapeSelect = document.getElementById('shapeSelect');
+            const selectedShape = shapeSelect.value;
+            
+            // Create a temporary canvas with larger size for better quality
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCanvas.width = 320;
+            tempCanvas.height = 320;
+            
+            // Disable image smoothing for pixel-perfect scaling
+            tempCtx.imageSmoothingEnabled = false;
+            tempCtx.webkitImageSmoothingEnabled = false;
+            tempCtx.mozImageSmoothingEnabled = false;
+            tempCtx.msImageSmoothingEnabled = false;
+            
+            // Scale up the original canvas
+            tempCtx.drawImage(canvas, 0, 0, 320, 320);
+            
+            // Create download link
+            const link = document.createElement('a');
+            link.download = `${selectedShape}.png`;
+            link.href = tempCanvas.toDataURL('image/png');
+            
+            // Trigger download
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Automatically clear canvas after download
+            clearCanvas();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Shape Classification</title>
+        <link rel="stylesheet" href="style.css" />
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/tensorflow/4.2.0/tf.min.js"></script>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Shape Classifier</h1>
+
+            <canvas id="drawingCanvas" width="32" height="32"></canvas>
+
+            <div class="controls">
+                <button class="clear-btn" onclick="clearCanvas()">Clear</button>
+                <button
+                    class="predict-btn"
+                    id="predictBtn"
+                    onclick="predictShape()"
+                >
+                    Predict Shape
+                </button>
+            </div>
+
+            <div class="prediction-label" id="predictionLabel">
+                <div class="prediction-result" id="predictionResult">Shape</div>
+                <div class="confidence" id="confidenceScore">
+                    Confidence: 0%
+                </div>
+            </div>
+        </div>
+
+        <script src="script.js"></script>
+    </body>
+</html>
