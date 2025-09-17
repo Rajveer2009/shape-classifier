@@ -16,5 +16,4 @@ This is a simple web application for classifying hand-drawn shapes (Circle, Squa
 
 ## Screenshot
 
-![Shape Classification Web App Interface](screenshot.jpg)
-
+<img src="screenshot.jpg" alt="screenshot" width=300px>
